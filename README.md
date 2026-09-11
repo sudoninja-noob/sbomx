@@ -68,8 +68,7 @@ sbomx serve --port 8000     # docs at http://localhost:8000/api/v1/docs
 > If the `sbomx` command isn't on your PATH after install, use the module form:
 > `python -m sbomx.cli cve -i sbom.json -o report.html`.
 
-See [docs/usage.md](docs/usage.md) for the full command and API reference,
-or the project page at **[index.html](index.html)** (enable GitHub Pages to publish it).
+See the project page at **[sbobx](https://github.com/sudoninja-noob/sbomx/settings))** (enable GitHub Pages to publish it).
 
 ## Compliance alignment
 
