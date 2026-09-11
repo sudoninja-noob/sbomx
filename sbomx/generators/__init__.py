@@ -1,1 +1,0 @@
-"""SBOM generators: CycloneDX, SPDX."""
