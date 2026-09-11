@@ -1,0 +1,5 @@
+00:00.0 Host bridge: Intel Corporation Xeon E3-1200 v6/7th Gen Core Processor Host Bridge/DRAM Registers [8086:5914]
+00:02.0 VGA compatible controller: Intel Corporation HD Graphics 620 [8086:5916]
+00:14.0 USB controller: Intel Corporation Sunrise Point-LP USB 3.0 xHCI Controller [8086:9d2f]
+00:1f.3 Audio device: Intel Corporation Sunrise Point-LP HD Audio [8086:9d71]
+02:00.0 Network controller: Realtek Semiconductor Co., Ltd. RTL8822BE 802.11 Wireless Adapter [10ec:b822]

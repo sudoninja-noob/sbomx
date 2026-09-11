@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sbomx — SBOM scanner &amp; CVE report tool</title>
+<meta name="description" content="Generate CycloneDX & SPDX SBOMs and CVE vulnerability reports from firmware, binaries, SBOMs, manifests and component lists. Built for TIC labs.">
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#121822; --panel2:#0e141d; --border:#1e2a38;
+    --text:#c8d6e5; --muted:#7c8b9c; --accent:#39d353; --accent2:#4dabf7;
+    --crit:#ff4d4f; --high:#ff7a45; --med:#ffc53d; --low:#4dabf7;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.6;}
+  a{color:var(--accent2);text-decoration:none} a:hover{text-decoration:underline}
+  code,pre{font-family:var(--mono)}
+  .wrap{max-width:960px;margin:0 auto;padding:0 22px}
+  header.nav{position:sticky;top:0;background:rgba(11,15,20,.85);backdrop-filter:blur(8px);
+    border-bottom:1px solid var(--border);z-index:10}
+  .nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .brand{font-family:var(--mono);font-weight:700;color:var(--accent);font-size:18px}
+  .brand span{color:var(--muted);font-weight:400}
+  .nav nav a{color:var(--text);margin-left:20px;font-size:14px}
+  /* hero */
+  .hero{padding:70px 0 50px;text-align:center;border-bottom:1px solid var(--border);
+    background:radial-gradient(circle at 50% -10%, #14202c 0%, var(--bg) 60%)}
+  .hero h1{font-family:var(--mono);font-size:42px;margin:0 0 6px;color:var(--accent);letter-spacing:1px}
+  .hero .tag{font-size:19px;color:var(--text);margin:0 0 10px}
+  .hero .sub{color:var(--muted);max-width:640px;margin:0 auto 26px;font-size:15px}
+  .badges span{display:inline-block;background:var(--panel);border:1px solid var(--border);
+    border-radius:20px;padding:4px 12px;margin:4px;font-family:var(--mono);font-size:12px;color:var(--muted)}
+  .cta{margin-top:26px}
+  .btn{display:inline-block;font-family:var(--mono);font-size:14px;padding:11px 20px;border-radius:8px;
+    margin:6px;border:1px solid var(--border);background:var(--panel);color:var(--text)}
+  .btn.primary{background:var(--accent);color:#04240f;border-color:var(--accent);font-weight:700}
+  .btn:hover{border-color:var(--accent);text-decoration:none}
+  /* sections */
+  section{padding:50px 0;border-bottom:1px solid var(--border)}
+  h2{font-family:var(--mono);color:var(--accent);font-size:22px;margin:0 0 8px}
+  h2::before{content:"# ";color:var(--muted)}
+  .lead{color:var(--muted);margin:0 0 26px;font-size:15px}
+  h3.qh{font-family:var(--mono);color:var(--accent2);font-size:15px;margin:26px 0 4px}
+  h3.qh::before{content:"› ";color:var(--muted)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px}
+  .card h3{margin:0 0 6px;font-size:15px;color:var(--text)}
+  .card h3 .ic{color:var(--accent)}
+  .card p{margin:0;color:var(--muted);font-size:14px}
+  pre{background:var(--panel2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;
+    overflow-x:auto;font-size:13px;color:var(--text)}
+  pre .c{color:var(--muted)} pre .g{color:var(--accent)} pre .b{color:var(--accent2)}
+  ol.steps{padding-left:0;list-style:none;counter-reset:s}
+  ol.steps li{counter-increment:s;background:var(--panel);border:1px solid var(--border);
+    border-radius:10px;padding:14px 16px 14px 52px;margin-bottom:12px;position:relative}
+  ol.steps li::before{content:counter(s);position:absolute;left:14px;top:14px;width:26px;height:26px;
+    background:var(--accent);color:#04240f;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--mono);font-weight:700;font-size:13px}
+  ol.steps b{color:var(--text)}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-family:var(--mono);font-size:12px;text-transform:uppercase;letter-spacing:.5px}
+  td code{color:var(--accent2)}
+  .sev{display:inline-block;padding:1px 9px;border-radius:10px;font-size:11px;font-weight:700;font-family:var(--mono);color:#000}
+  .s-c{background:var(--crit)} .s-h{background:var(--high)} .s-m{background:var(--med)} .s-l{background:var(--low)}
+  footer{padding:34px 0;text-align:center;color:var(--muted);font-size:13px}
+  .pill{font-family:var(--mono);font-size:12px;color:var(--accent);border:1px solid var(--border);
+    background:var(--panel);border-radius:6px;padding:2px 8px}
+  @media(max-width:600px){.hero h1{font-size:32px}}
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <div class="brand">sbomx <span>// SBOM &amp; CVE</span></div>
+    <nav>
+      <a href="#features">Features</a>
+      <a href="#start">Quick start</a>
+      <a href="#commands">Commands</a>
+      <a href="#inputs">Inputs</a>
+      <a href="#api">API</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <h1>sbomx</h1>
+    <p class="tag">Software Bill of Materials scanner &amp; CVE vulnerability reporter</p>
+    <p class="sub">Generate <b>CycloneDX 1.6</b> and <b>SPDX 2.3</b> SBOMs and cross-referenced
+      CVE reports from firmware, binaries, existing SBOMs, package manifests, component
+      lists — <b>and hardware</b> (EDA design-file BOMs + firmware-inferred device
+      inventory). Built for TIC (Testing, Inspection, Certification) labs — IoT,
+      automotive, and embedded products.</p>
+    <div class="badges">
+      <span>Python 3.11+</span><span>Software + Hardware BOM</span><span>CycloneDX + SPDX</span>
+      <span>NVD + OSV</span><span>CLI + REST API</span><span>No API key required</span>
+      <span>Offline mode</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#start">Get started →</a>
+      <a class="btn" href="https://github.com/sudoninja-noob/sbomx" id="repo">View on GitHub</a>
+    </div>
+  </div>
+</div>
+
+<section id="features">
+  <div class="wrap">
+    <h2>What it does</h2>
+    <p class="lead">One tool from raw firmware to a shareable vulnerability report.</p>
+    <div class="grid">
+      <div class="card"><h3><span class="ic">▣</span> SBOM generation</h3>
+        <p>Valid CycloneDX 1.6 (JSON + XML) and SPDX 2.3 (JSON + tag-value) with
+           purl + CPE identifiers and a vulnerabilities section.</p></div>
+      <div class="card"><h3><span class="ic">◎</span> CVE engine</h3>
+        <p>Concurrent async NVD + OSV lookups, SQLite cache, dedup, CVSS v3.1 scoring
+           and severity banding. Pick sources with <code>--source</code>.</p></div>
+      <div class="card"><h3><span class="ic">▤</span> Rich reports</h3>
+        <p>JSON, a self-contained dark HTML dashboard (severity chart, sortable table,
+           expandable CVE rows, JSON/CSV export), and VEX documents.</p></div>
+      <div class="card"><h3><span class="ic">⌁</span> Binary analysis</h3>
+        <p>Walks rootfs trees, detects ELF/PE, and extracts library versions —
+           pure-Python fallback plus optional <code>lief</code>/<code>libmagic</code>.</p></div>
+      <div class="card"><h3><span class="ic">⚙</span> Hardware BOM</h3>
+        <p>Parses EDA design-file BOMs (MPN + manufacturer) and infers hardware from
+           Device Tree / <code>lspci</code> / <code>lsusb</code>, then maps to
+           <code>cpe:2.3:h:</code> and real NVD hardware CVEs.</p></div>
+      <div class="card"><h3><span class="ic">⚑</span> Compliance-aligned</h3>
+        <p>NTIA minimum elements, EO 14028, EN 18031, and UN R155 / ISO 21434
+           (evidence of detection method).</p></div>
+      <div class="card"><h3><span class="ic">⇄</span> CLI + REST API</h3>
+        <p>Six subcommands and a FastAPI service with Swagger UI. Docker &amp;
+           docker-compose included.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <h2>Quick start</h2>
+    <p class="lead">Install, then choose the software or hardware track below.</p>
+<pre><span class="c"># install (core)</span>
+pip install .</pre>
+
+    <h3 class="qh">Software BOM (SBOM)</h3>
+    <p class="lead">Firmware, binaries, existing SBOMs, package manifests.
+       Use <code>--source all</code> (or <code>osv</code> for npm/pypi/go deps).</p>
+<pre><span class="c"># firmware directory → SBOM</span>
+<span class="g">sbomx</span> scan ./firmware/ --format cyclonedx -o sbom.json
+
+<span class="c"># SBOM / manifest / component list → CVE report</span>
+<span class="g">sbomx</span> cve -i sbom.json --source all -o cve-report.html
+
+<span class="c"># end-to-end: firmware → SBOM + CVE report + VEX</span>
+<span class="g">sbomx</span> full ./firmware/ --sbom-format spdx --cve-report html -d ./results/</pre>
+
+    <h3 class="qh">Hardware BOM (HBOM)</h3>
+    <p class="lead">EDA design-file BOM, or inferred from firmware artifacts.
+       Always use <code>--source nvd</code> for hardware.</p>
+<pre><span class="c"># EDA design-file BOM (CSV with MPN + Manufacturer) → SBOM</span>
+<span class="g">sbomx</span> scan board-bom.csv --format cyclonedx -o hardware-sbom.json
+
+<span class="c"># design-file BOM → hardware CVE report</span>
+<span class="g">sbomx</span> cve -i board-bom.csv --format hbom --source nvd -o hbom-report.html
+
+<span class="c"># inferred from firmware (Device Tree / lspci / lsusb)</span>
+<span class="g">sbomx</span> cve -i device-tree.dts --format hwprobe --source nvd -o hw-report.html</pre>
+
+    <p class="lead" style="margin-top:14px">Not on your PATH? Use
+      <code>python -m sbomx.cli …</code> with the same arguments.</p>
+  </div>
+</section>
+
+<section id="commands">
+  <div class="wrap">
+    <h2>Commands</h2>
+    <p class="lead">Six subcommands. Add <code>--offline</code> before any of them for cache-only, no-network runs.</p>
+    <table>
+      <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>sbomx scan</code></td><td>Build an SBOM from any input (CycloneDX/SPDX, JSON/XML/tag-value)</td></tr>
+        <tr><td><code>sbomx cve</code></td><td>CVE lookup → JSON/HTML report; <code>--source all|nvd|osv</code>, <code>--vex-input</code></td></tr>
+        <tr><td><code>sbomx full</code></td><td>End-to-end: SBOM + CVE report + VEX into a directory</td></tr>
+        <tr><td><code>sbomx convert</code></td><td>Convert an SBOM between CycloneDX and SPDX</td></tr>
+        <tr><td><code>sbomx validate</code></td><td>Parse and report format, spec version, component count</td></tr>
+        <tr><td><code>sbomx serve</code></td><td>Start the FastAPI server (Swagger UI at <code>/api/v1/docs</code>)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="inputs">
+  <div class="wrap">
+    <h2>Inputs it understands</h2>
+    <p class="lead">Format is auto-detected; override with <code>--format</code> if needed.</p>
+    <div class="grid">
+      <div class="card"><h3>Firmware &amp; binaries</h3><p>Rootfs directories, ELF/PE files —
+        version strings extracted and mapped to CPE/purl.</p></div>
+      <div class="card"><h3>Existing SBOMs</h3><p>CycloneDX (JSON/XML) and SPDX
+        (JSON/tag-value). Convert between them with <code>sbomx convert</code>.</p></div>
+      <div class="card"><h3>Package manifests</h3><p><code>requirements.txt</code>,
+        <code>package.json</code>, <code>pom.xml</code>, <code>go.sum</code>,
+        <code>Cargo.toml</code>, and more.</p></div>
+      <div class="card"><h3>Component lists</h3><p>JSON or CSV
+        (<code>name,version,vendor,type</code>) — enter what you already know.</p></div>
+      <div class="card"><h3>Hardware BOM</h3><p>EDA design-file BOM (KiCad/Altium/CSV
+        with <code>MPN</code> + manufacturer) → hardware components with
+        <code>cpe:2.3:h:</code>.</p></div>
+      <div class="card"><h3>Firmware hardware probe</h3><p>Device Tree
+        <code>.dts</code>, <code>lspci</code>/<code>lsusb</code>/<code>cpuinfo</code>
+        dumps → inferred device inventory.</p></div>
+      <div class="card"><h3>Scanner tables</h3><p>Paste another scanner's output
+        (a <code>NAME</code>/<code>INSTALLED</code> table) — components are extracted
+        and re-scanned.</p></div>
+      <div class="card"><h3>VEX suppression</h3><p>Mark CVEs <code>not_affected</code>
+        via <code>--vex-input</code>; they drop out of the counts.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="report">
+  <div class="wrap">
+    <h2>Example report</h2>
+    <p class="lead">Every CVE gets a source, CVSS v3.1 score, and severity band —
+       software <em>and</em> hardware components side by side.</p>
+    <table>
+      <thead><tr><th>Component</th><th>Type</th><th>CVE</th><th>Severity</th><th>CVSS</th></tr></thead>
+      <tbody>
+        <tr><td>busybox 1.36.1</td><td>software</td><td><code>CVE-2022-48174</code></td><td><span class="sev s-c">CRITICAL</span></td><td>9.8</td></tr>
+        <tr><td>esp32</td><td>hardware</td><td><code>CVE-2021-28139</code></td><td><span class="sev s-h">HIGH</span></td><td>8.8</td></tr>
+        <tr><td>busybox 1.36.1</td><td>software</td><td><code>CVE-2025-60876</code></td><td><span class="sev s-m">MEDIUM</span></td><td>6.5</td></tr>
+        <tr><td>bcm2711</td><td>hardware</td><td><code>CVE-2021-26313</code></td><td><span class="sev s-m">MEDIUM</span></td><td>5.6</td></tr>
+        <tr><td>busybox 1.36.1</td><td>software</td><td><code>CVE-2025-46394</code></td><td><span class="sev s-l">LOW</span></td><td>3.2</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="api">
+  <div class="wrap">
+    <h2>REST API</h2>
+    <p class="lead">Run <code>sbomx serve</code> — interactive docs at <span class="pill">/api/v1/docs</span></p>
+<pre><span class="b">POST</span> /api/v1/scan     <span class="c"># upload binary/zip/manifest/SBOM → SBOM</span>
+<span class="b">POST</span> /api/v1/cve      <span class="c"># upload SBOM/list → CVE report JSON</span>
+<span class="b">POST</span> /api/v1/full     <span class="c"># upload → SBOM + CVE report</span>
+<span class="b">POST</span> /api/v1/convert  <span class="c"># convert an SBOM between formats</span>
+<span class="b">GET</span>  /api/v1/health   <span class="c"># health check</span></pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>sbomx · MIT License · aligns with NTIA minimum elements &amp; EO 14028.<br>
+    Built for TIC labs — IoT, automotive &amp; embedded firmware.<br>
+    Built by <a href="https://github.com/sudoninja-noob">sudoninja-noob</a> ·
+    <a href="https://github.com/sudoninja-noob/sbomx">github.com/sudoninja-noob/sbomx</a></p>
+  </div>
+</footer>
+
+<script>
+  // If served from GitHub Pages (user.github.io/repo), point the GitHub button
+  // at the matching repository automatically.
+  (function () {
+    try {
+      var h = location.hostname, parts = location.pathname.split("/").filter(Boolean);
+      if (h.endsWith("github.io")) {
+        var user = h.split(".")[0];
+        var repo = parts[0] || "sbomx";
+        document.getElementById("repo").href = "https://github.com/" + user + "/" + repo;
+      }
+    } catch (e) {}
+  })();
+</script>
+</body>
+</html>
