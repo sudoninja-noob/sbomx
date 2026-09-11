@@ -1,0 +1,29 @@
+SPDXVersion: SPDX-2.3
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentName: sample
+DocumentNamespace: https://example.com/spdx/sample-123
+Creator: Tool: example-1.0
+Created: 2026-09-10T10:00:00Z
+
+PackageName: zlib
+SPDXID: SPDXRef-Package-zlib-0
+PackageVersion: 1.2.13
+PackageSupplier: Organization: zlib
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: Zlib
+PackageLicenseDeclared: Zlib
+PackageCopyrightText: NOASSERTION
+ExternalRef: SECURITY cpe23Type cpe:2.3:a:zlib:zlib:1.2.13:*:*:*:*:*:*:*
+ExternalRef: PACKAGE-MANAGER purl pkg:generic/zlib@1.2.13
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-zlib-0
+
+PackageName: curl
+SPDXID: SPDXRef-Package-curl-1
+PackageVersion: 7.88.0
+PackageSupplier: Organization: haxx
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+PackageLicenseConcluded: curl
+Relationship: SPDXRef-DOCUMENT DESCRIBES SPDXRef-Package-curl-1

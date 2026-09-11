@@ -1,0 +1,17 @@
+services:
+  sbomx-api:
+    build: .
+    image: sbomx:latest
+    ports:
+      - "8000:8000"
+    environment:
+      # Optional NVD API key raises the rate limit to 50 req / 30s.
+      - NVD_API_KEY=${NVD_API_KEY:-}
+      - SBOMX_CACHE_DB=/data/cache.db
+    volumes:
+      - sbomx-cache:/data
+    command: ["serve", "--host", "0.0.0.0", "--port", "8000"]
+    restart: unless-stopped
+
+volumes:
+  sbomx-cache:
